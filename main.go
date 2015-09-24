@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 
-	gl "github.com/chsc/gogl/gl21"
+	gl "github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/runningwild/glop/gin"
 	"github.com/runningwild/glop/gos"
 	"github.com/runningwild/glop/render"
@@ -27,11 +26,11 @@ func initWindow(sys system.System, width int, height int) {
 	if err != nil {
 		panic(err)
 	}
-	gl.Ortho(gl.Double(0), gl.Double(width), gl.Double(0), gl.Double(height),
-		1000, -1000)
+	// gl.Ortho(gl.Double(0), gl.Double(width), gl.Double(0), gl.Double(height),
+	// 	1000, -1000)
 }
 
-var log io.WriteCloser
+var log *os.File
 
 func init() {
 	var err error
@@ -56,8 +55,6 @@ func loadDictionary(fontName string) *text.Dictionary {
 		}
 	}()
 	dict, err := text.LoadDictionary(f)
-	return nil
-	fmt.Fprintf(log, "err: %v\n", err)
 	if err != nil {
 		panic(err)
 	}
@@ -73,22 +70,20 @@ func main() {
 		initWindow(sys, 800, 600)
 	})
 
-	// font := loadDictionary("skia.dict")
-	render.Queue(func() {
-		loadDictionary("skia.dict")
-	})
-
+	font := loadDictionary("skia.dict")
+	fmt.Fprintf(log, "Font: %v", font)
 	for true {
 		sys.Think()
 		render.Queue(func() {
-			gl.Color4ub(255, 255, 255, 255)
-			gl.Begin(gl.QUADS)
-			gl.Vertex2d(100, 100)
-			gl.Vertex2d(500, 100)
-			gl.Vertex2d(500, 150)
-			gl.Vertex2d(100, 150)
-			gl.End()
-			// font.RenderString("TEST", 100, 100, 100)
+			// gl.Color4ub(0, 255, 255, 255)
+			// gl.Begin(gl.QUADS)
+			// gl.Vertex2d(100, 100)
+			// gl.Vertex2d(500, 100)
+			// gl.Vertex2d(500, 150)
+			// gl.Vertex2d(100, 150)
+			// gl.End()
+			font.SetFontColor(1, 1, 1)
+			font.RenderString("TEST", 100, 100, 100)
 			sys.SwapBuffers()
 		})
 		render.Purge()
