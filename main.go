@@ -1,15 +1,18 @@
 package main
 
 import (
-	gl "github.com/chsc/gogl/gl21"
-	"github.com/runningwild/glop/gin"
-	"github.com/runningwild/glop/gos"
-	"github.com/runningwild/glop/gui"
-	"github.com/runningwild/glop/render"
-	"github.com/runningwild/glop/system"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+
+	gl "github.com/chsc/gogl/gl21"
+	"github.com/runningwild/glop/gin"
+	"github.com/runningwild/glop/gos"
+	"github.com/runningwild/glop/render"
+	"github.com/runningwild/glop/system"
+	"github.com/runningwild/glop/text"
 )
 
 func init() {
@@ -28,13 +31,33 @@ func initWindow(sys system.System, width int, height int) {
 		1000, -1000)
 }
 
-func loadDictionary(fontName string) *gui.Dictionary {
-	f, err := os.Open(filepath.Join("..", "data", "skia.gob"))
+var log io.WriteCloser
+
+func init() {
+	var err error
+	log, err = os.Create("/Users/jwills/code/src/github.com/dgthunder/glomple/log.txt")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func loadDictionary(fontName string) *text.Dictionary {
+	fmt.Fprintf(log, "path: %v\n", filepath.Join(os.Args[0], "..", "..", "skia.dict"))
+	f, err := os.Open(filepath.Join(os.Args[0], "..", "..", "skia.dict"))
+	fmt.Fprintf(log, "err: %v\n", err)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
-	dict, err := gui.LoadDictionary(f)
+	fmt.Fprintf(log, "err: %v\n", err)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(log, "recover: %v\n", r)
+		}
+	}()
+	dict, err := text.LoadDictionary(f)
+	return nil
+	fmt.Fprintf(log, "err: %v\n", err)
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +65,6 @@ func loadDictionary(fontName string) *gui.Dictionary {
 }
 
 func main() {
-	runtime.GOMAXPROCS(2)
 	sys := system.Make(gos.GetSystemInterface())
 	sys.Startup()
 
@@ -51,7 +73,10 @@ func main() {
 		initWindow(sys, 800, 600)
 	})
 
-	font := loadDictionary("skia.gob")
+	// font := loadDictionary("skia.dict")
+	render.Queue(func() {
+		loadDictionary("skia.dict")
+	})
 
 	for true {
 		sys.Think()
@@ -63,7 +88,7 @@ func main() {
 			gl.Vertex2d(500, 150)
 			gl.Vertex2d(100, 150)
 			gl.End()
-			font.RenderString("TEST", 100, 100, 0, 100, gui.Left)
+			// font.RenderString("TEST", 100, 100, 100)
 			sys.SwapBuffers()
 		})
 		render.Purge()
